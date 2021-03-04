@@ -1,0 +1,7 @@
+go.sum
+.env
+vendor/*
+dist/*
+tmp/*
+sample-structure-go
+.Ds_Store
