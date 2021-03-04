@@ -73,33 +73,27 @@ func (t *TasksService) GetAll(assignee string, dueDate string) rest.Response {
 
 func (t *TasksService) New(data dto.TaskDTO) *models.Task {
 	var (
-		ret          *models.Task
-		userService  = UsersService{}
-		user         = userService.FindByID(data.UserID)
-		tID          int
-		tContent     string
-		tUserID      string
-		tCreatedDate string
-		tStatus      string
-		tAssigner    string
-		tAssignee    string
-		tDueDate     string
+		ret         models.Task
+		userService = UsersService{}
+		user        = userService.FindByID(data.UserID)
 	)
 
 	if user == nil || user.MaxTodo == 0 {
-		return ret
+		return nil
 	}
 
 	var (
-		sql = "INSERT INTO tasks (content, user_id, created_date, assigner, assignee, progress, due_date) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+		sql     = "INSERT INTO `tasks` (`content`, `user_id`, `created_date`, `assigner`, `assignee`, `progress`, `due_date`) VALUES (?, ?, ?, ?, ?, ?, ?)"
+		stmt, _ = db.DB().Prepare(sql)
+		_, err  = stmt.Exec(data.Content, data.UserID, data.CreatedDate, data.Assigner, data.Assignee, data.Status, data.DueDate)
 	)
-	err := db.DB().QueryRow(sql, data.Content, data.UserID, data.CreatedDate, data.Assigner, data.Assignee, data.Status, data.DueDate)
 	if err != nil {
-		fmt.Println("db.DB()", data, err)
-		return ret
+		fmt.Println("db.DB()", data, err.Error())
+		return nil
 	}
-	userService.RefreshMaxTodo(data.UserID)
-	ret = &models.Task{ID: tID, Content: tContent, UserID: tUserID, CreatedDate: tCreatedDate, Assigner: tAssigner, Assignee: tAssignee, Status: tStatus, DueDate: tDueDate}
 
-	return ret
+	userService.RefreshMaxTodo(data.UserID)
+	ret = models.Task{Content: data.Content, UserID: data.UserID, CreatedDate: data.CreatedDate, Assigner: data.Assigner, Assignee: data.Assignee, Status: data.Status, DueDate: data.DueDate}
+
+	return &ret
 }

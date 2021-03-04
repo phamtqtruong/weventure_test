@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"weventure_test/api/models"
 	"weventure_test/common/db"
 )
@@ -36,10 +37,11 @@ func (s *UsersService) FindByID(id string) *models.User {
 		uID      string
 		uPwd     string
 		uMaxTodo int
-		sql      = "SELECT * FROM users id=$1 AND password=$2 LIMIT 1"
+		sql      = "SELECT * FROM `users` WHERE id=?"
 		rows     = db.DB().QueryRow(sql, id)
 	)
-	if err := rows.Scan(&uID, &uMaxTodo, &uPwd); err != nil {
+	if err := rows.Scan(&uID, &uPwd, &uMaxTodo); err != nil {
+		fmt.Println("UsersService.FindById", err.Error())
 		return nil
 	}
 
@@ -48,11 +50,18 @@ func (s *UsersService) FindByID(id string) *models.User {
 
 func (s *UsersService) RefreshMaxTodo(id string) {
 	var (
-		sql = "UPDATE `users` SET max_todo=$2 WHERE id=$1"
+		sql  = "UPDATE `users` SET max_todo=? WHERE id=?"
+		user = s.FindByID(id)
 	)
-	err := db.DB().QueryRow(sql, id, 4)
+
+	if user == nil {
+		fmt.Println("UsersService.RefreshMaxTodo", user)
+		return
+	}
+
+	var stmt, _ = db.DB().Prepare(sql)
+	var _, err = stmt.Exec(user.MaxTodo-1, id)
 	if err != nil {
 		return
-
 	}
 }
