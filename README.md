@@ -7,6 +7,6 @@
 
 # Run
 
-- `go mod weventure_test`
+- `go mod init weventure_test`
 - `go build`
 - `go run main.go`
